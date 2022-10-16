@@ -72,3 +72,136 @@ Google has provided a very detail framework but we should focus more about some 
  ```
 </details>
 
+#### 2. Stub:
+
+<details>
+  <summary>StubExample.cpp</summary>
+  
+  ```C++
+  class Service
+  {
+      public:
+          string doSomething(UserModeInterface user)
+          {
+              /*Do something*/
+              return user.getUuid();
+          }
+  };
+  ```
+</details>
+
+<details>
+  <summary>StubExampleTest.cpp</summary>
+  
+  ```C++
+  class UserModelStub : public UserModeInterface
+  {
+      public:
+          string getUuid()
+          {
+              return 0000-0000-0000-0001;
+          }
+  };
+
+  TEST_F(ServiceTest, doSomething_01)
+  {
+      //run the test
+      auto uuid = service.doSomething(new UserModelStub());
+      EXPECT_THAT(uuid, StrEq("0000-0000-0000-0001");
+  }
+  ```
+  
+</details>
+
+#### 3. Spy (Need to verify the example):
+
+<details>
+  <summary>SpyExample.cpp</summary>
+  
+  ```C++
+  class Logger
+  {
+      public:
+          void log(string message) = 0;
+  };
+  
+  class UserNotifier
+  {
+      public:
+          UserNotifier(Logger logger): m_logger(logger) {}
+  
+          void registerUser(UserModeInterface user)
+          {
+              m_logger.log("Notifying the user: " + user.name());
+          }
+      private:
+          Logger m_logger;
+  };
+  ```
+
+</details>
+
+<details>
+  <summary>SpyExampleTest.cpp</summary>
+  
+  ```C++
+  class LoggerSpy : public Logger
+  {
+      puclic:
+          vector<string> messages{};
+          void log(string message): void
+          {
+              messages.push_back(message);
+          }
+  };
+  
+  TEST_F(UserNotifierTest, registerUser_01)
+  {
+      LoggerSpy logger = new LoggerSpy();
+      UserNotifier notifier = new UserNotifier(logger);
+  
+      User user = new User(name = "Hello");
+      notifier.registerUser(user);
+      EXPECT_THAT(logger.messages.back(), StrEq("Notifying the user: Hello));
+  }
+  ```
+  
+</details>
+  
+#### 4. Fake (Need to verify the example):
+<details>
+  <summary>FakeExample.cpp</summary>
+  
+  ```C++
+  class FakeExample
+  {
+      public:
+          virtual void doSomething(int& value, int& error)
+          {
+              value = External::API::getValue();
+              error = External::API::getError();
+          }
+  };
+  ```
+
+</details>
+
+<details>
+  <summary>FakeExampleTest.cpp</summary>
+  
+  ```C++
+  class FakeExampleTest : public FakeExample
+  {
+      public:
+          void doSomething(int& value, int& error) override
+          {
+              value = m_value;
+              error = m_error;
+          }
+          int m_value;
+          int m_error;
+  };
+  ```
+  
+</details>
+  
