@@ -6,6 +6,8 @@
 
 [III. Types of unit test](#types)
 
+[IV. UT Project Structure](#structure)
+
 <a name="overview"></a>
 ## I. Overview
 
@@ -205,3 +207,190 @@ Google has provided a very detail framework but we should focus more about some 
   
 </details>
   
+<a name="structure"></a>
+## IV. UT Project Structure
+### An example of UT folder structure:
+  >Insert image Later
+    
+### Parts of a test:
+  >Insert image later
+    
+#### Class that being tested is called: Class under test.
+
+<details>
+  <summary>A.hpp</summary>
+  
+  ```C++
+  class A
+  {
+      public:
+          A(B* b): m_b(b) {}
+          virtual ~A(){}
+          virtual void doThis();
+  
+      private:
+          void doRecovery();
+          B* m_b;
+  };
+  ```
+
+</details>
+  
+<details>
+  <summary>A.cpp</summary>
+  
+  ```C++
+  void A::doThis()
+  {
+      int error;
+      if (m_b->doIncremental(error) == 0)
+      {
+          if (m_b->doIncremantal(error) == 1)
+          {
+              if(error != 0)
+              {
+                  doRecovery();
+              }
+          }
+      }
+      else
+      {
+          if (error != 0)
+          {
+              doRecovery();
+          }
+      }
+  }
+  
+  void A::doRecovery()
+  {
+      if (C::doRecovery())
+      {
+          //doThings();
+      }
+  }
+  ```
+  
+</details>
+
+_Other outside classes are dependencies classes. We will try to mock all the dependencies to make the test independently_
+
+<details>
+  <summary>B.hpp</summary>
+  
+  ```C++
+  class B
+  {
+      public:
+          virtual int doIncremental(int& error);
+      private:
+          int doInternal(int& error);
+          int m_state;
+  };
+  ```
+  
+</details>
+  
+<details>
+  <summary>B.cpp</summary>
+  
+  ```C++
+  int B::doIncremental(int& error)
+  {
+      return doInternal(error);
+  }
+  int B::doInternal(int& error)
+  {
+      error = 0;
+      return m_state++;
+  }
+  ```
+  
+</details>
+  
+<details>
+  <summary>C.hpp</summary>
+  
+  ```C++
+  class C
+  {
+      public:
+          static bool doRecovery();
+  };
+  ```
+  
+</details>
+  
+<details>
+  <summary>C.cpp</summary>
+  
+  ```C++
+  bool C::doRecovery()
+  {
+      return true;
+  }
+  ```
+  
+</details>
+  
+_Each class has it's own mock class. Normally we just need to mock public methods only_
+<details>
+  <summary>MockA.hpp</summary>
+  
+  ```C++
+  class MockA : public A
+  {
+      public:
+          MOCK_METHOD(void, doThis, ());
+  };
+  ```
+  
+</details>
+  
+<details>
+  <summary>MockB.hpp</summary>
+  
+  ```C++
+  class MockB : public B
+  {
+      public: 
+          MOCK_METHOD(int, doIncremental, (int& error));
+  };
+  ```
+  
+</details>
+  
+_The function being called of C class has a static funtion. Gmock doesn't support mock non-virtual functions so we need another solution for it._
+_Here we use the combination of mock and fake_
+  * The mock provides expectation.
+  
+<details>
+  <summary>MockC.hpp</summary>
+
+  ```C++
+  class MockC
+  {
+      public:
+          MOCK_METHOD(bool, doRecovery());
+  };
+  Mock* M_c = nullptr;
+  ```
+
+</details>
+  
+  * And the fake help to link the call from the class under test to the mock
+<details>
+  <summary>FakeC.cpp</summary>
+
+  ```C++
+  #include "C.hpp"
+  #include "MockC.hpp"
+
+  //We can directly put it in MockC.hpp or in fake/C.cpp because it define the body of methods for C class
+  bool C::doRecovery()
+  {
+      return M_c->doRecovery();
+  }
+  ```
+
+</details>
